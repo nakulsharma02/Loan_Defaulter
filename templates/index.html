@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loan Defaulter Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f1117;
+      --card:     #1a1d2e;
+      --border:   #2e3250;
+      --accent:   #6c63ff;
+      --accent2:  #a78bfa;
+      --green:    #22c55e;
+      --red:      #ef4444;
+      --yellow:   #f59e0b;
+      --text:     #e2e8f0;
+      --muted:    #8892a4;
+      --radius:   14px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px 60px;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .header .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #6c63ff22, #a78bfa22);
+      border: 1px solid var(--border);
+      color: var(--accent2);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 99px;
+      margin-bottom: 16px;
+    }
+    .header h1 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 30%, var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+    .header p { color: var(--muted); margin-top: 10px; font-size: .95rem; }
+
+    /* ── Layout ── */
+    .wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 32px;
+    }
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent2);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px; height: 18px;
+      background: var(--accent);
+      border-radius: 4px;
+    }
+
+    /* ── Form grid ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
+    }
+
+    .field label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .field input, .field select {
+      width: 100%;
+      padding: 10px 14px;
+      background: #12151f;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: .95rem;
+      font-family: inherit;
+      transition: border .2s;
+      appearance: none;
+    }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px #6c63ff22;
+    }
+    .field select option { background: #1a1d2e; }
+
+    /* ── Submit ── */
+    .submit-row {
+      margin-top: 24px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    button[type="submit"] {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-family: inherit;
+      font-size: .95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      padding: 13px 36px;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    button[type="submit"]:hover  { opacity: .9; }
+    button[type="submit"]:active { transform: scale(.97); }
+
+    /* ── Result card ── */
+    .result-card {
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      border: 1px solid var(--border);
+    }
+    .result-card.safe     { background: #0d2218; border-color: #166534; }
+    .result-card.defaulter{ background: #200e0e; border-color: #7f1d1d; }
+
+    .result-label {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .result-card.safe     .result-label { color: var(--green); }
+    .result-card.defaulter .result-label { color: var(--red); }
+
+    .result-sub { color: var(--muted); font-size: .9rem; margin-bottom: 20px; }
+
+    /* ── Probability bars ── */
+    .prob-row { margin-bottom: 12px; }
+    .prob-row .prob-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: .82rem;
+      margin-bottom: 5px;
+    }
+    .prob-row .prob-label span:first-child { color: var(--muted); }
+    .prob-row .prob-label span:last-child  { font-weight: 600; }
+
+    .bar-track {
+      width: 100%;
+      height: 8px;
+      background: #1e2235;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 1s ease;
+    }
+    .bar-fill.green { background: linear-gradient(90deg, #16a34a, #22c55e); }
+    .bar-fill.red   { background: linear-gradient(90deg, #b91c1c, #ef4444); }
+
+    /* ── Risk badge ── */
+    .risk-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 99px;
+      font-size: .78rem;
+      font-weight: 600;
+      margin-top: 16px;
+    }
+    .risk-Low       { background: #052e16; color: #4ade80; border: 1px solid #166534; }
+    .risk-Medium    { background: #1c1400; color: #fbbf24; border: 1px solid #92400e; }
+    .risk-High      { background: #2d0a0a; color: #f87171; border: 1px solid #7f1d1d; }
+    .risk-Very\ High{ background: #3b0000; color: #fca5a5; border: 1px solid #991b1b; }
+
+    /* ── Summary table ── */
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+      margin-top: 20px;
+    }
+    .summary-table th {
+      text-align: left;
+      color: var(--muted);
+      font-weight: 500;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .summary-table td {
+      padding: 8px 0;
+      border-bottom: 1px solid #1e2235;
+      color: var(--text);
+    }
+    .summary-table td:last-child { text-align: right; font-weight: 500; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      margin-top: 48px;
+      font-size: .8rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--accent2); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="badge">🏦 ML-Powered Risk Assessment</div>
+    <h1>Loan Defaulter Predictor</h1>
+    <p>Enter customer details below to predict loan default risk using Logistic Regression.</p>
+  </div>
+
+  <div class="wrapper">
+
+    <!-- ── Input Form ── -->
+    <div class="card">
+      <h2>Customer Details</h2>
+      <form method="post" action="/predict">
+        <div class="form-grid">
+
+          <div class="field">
+            <label>Age (years)</label>
+            <input type="number" name="age" min="18" max="100" step="1"
+                   placeholder="e.g. 35"
+                   value="{{ form_data.age if form_data else '' }}" required />
+          </div>
+
+          <div class="field">
+            <label>Annual Income (₹ / $)</label>
+            <input type="number" name="income" min="0" step="100"
+                   placeholder="e.g. 50000"
+                   value="{{ form_data.income if form_data else '' }}" required />
+          </div>
+
+          <div class="field">
+            <label>Loan Amount (₹ / $)</label>
+            <input type="number" name="loan_amount" min="0" step="100"
+                   placeholder="e.g. 120000"
+                   value="{{ form_data.loan_amount if form_data else '' }}" required />
+          </div>
+
+          <div class="field">
+            <label>Credit Score (300 – 850)</label>
+            <input type="number" name="credit_score" min="300" max="850" step="1"
+                   placeholder="e.g. 650"
+                   value="{{ form_data.credit_score if form_data else '' }}" required />
+          </div>
+
+          <div class="field">
+            <label>Employment Years</label>
+            <input type="number" name="employment_years" min="0" max="60" step="0.5"
+                   placeholder="e.g. 5"
+                   value="{{ form_data.employment_years if form_data else '' }}" required />
+          </div>
+
+         <div class="field">
+            <label>Education Level</label>
+            <select name="education_level" required>
+              <option value="" disabled {{ 'selected' if not form_data }}>Choose Education...</option>
+              <option value="High School" {{ 'selected' if form_data and form_data.education_level == 'High School' }}>High School</option>
+              <option value="Bachelors" {{ 'selected' if form_data and form_data.education_level == 'Bachelors' }}>Bachelors</option>
+              <option value="Masters" {{ 'selected' if form_data and form_data.education_level == 'Masters' }}>Masters</option>
+              <option value="PhD" {{ 'selected' if form_data and form_data.education_level == 'PhD' }}>PhD</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Housing Status</label>
+            <select name="housing_status" required>
+              <option value="" disabled {{ 'selected' if not form_data }}>Choose Housing...</option>
+              <option value="Mortgage" {{ 'selected' if form_data and form_data.housing_status == 'Mortgage' }}>Mortgage</option>
+              <option value="Own" {{ 'selected' if form_data and form_data.housing_status == 'Own' }}>Own House</option>
+              <option value="Rent" {{ 'selected' if form_data and form_data.housing_status == 'Rent' }}>Renting</option>
+            </select>
+          </div>
+
+        </div><!-- /form-grid -->
+
+        <div class="submit-row">
+          <button type="submit">Predict Default Risk →</button>
+        </div>
+      </form>
+    </div><!-- /card -->
+
+
+    <!-- ── Result ── -->
+    {% if result %}
+    <div class="result-card {{ 'defaulter' if result.is_defaulter else 'safe' }}">
+      <div class="result-label">{{ result.label }}</div>
+      <div class="result-sub">Model confidence breakdown</div>
+
+      <div class="prob-row">
+        <div class="prob-label">
+          <span>✅ Safe (No Default)</span>
+          <span>{{ result.safe_prob }}%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill green" style="width: {{ result.safe_prob }}%"></div>
+        </div>
+      </div>
+
+      <div class="prob-row">
+        <div class="prob-label">
+          <span>⚠️ Default Risk</span>
+          <span>{{ result.default_prob }}%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill red" style="width: {{ result.default_prob }}%"></div>
+        </div>
+      </div>
+
+      <span class="risk-badge risk-{{ result.risk_level }}">
+        Risk Level: {{ result.risk_level }}
+      </span>
+
+      <!-- Input summary -->
+      <table class="summary-table">
+        <thead>
+          <tr><th>Field</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Age</td>               <td>{{ form_data.age }} yrs</td></tr>
+          <tr><td>Income</td>            <td>{{ "{:,.0f}".format(form_data.income) }}</td></tr>
+          <tr><td>Loan Amount</td>       <td>{{ "{:,.0f}".format(form_data.loan_amount) }}</td></tr>
+          <tr><td>Credit Score</td>      <td>{{ form_data.credit_score }}</td></tr>
+          <tr><td>Employment Years</td>  <td>{{ form_data.employment_years }}</td></tr>
+          <tr><td>Education Level</td>   <td>{{ form_data.education_level }}</td></tr>
+          <tr><td>Housing Status</td>    <td>{{ form_data.housing_status }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+  </div><!-- /wrapper -->
+
+  <footer>
+    Loan Defaulter Predictor &mdash; Powered by
+    <a href="https://fastapi.tiangolo.com/" target="_blank">FastAPI</a> &amp;
+    scikit-learn Logistic Regression
+  </footer>
+
+</body>
+</html>
