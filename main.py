@@ -9,7 +9,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-import numpy as np
 import pandas as pd
 import joblib
 import os
@@ -29,15 +28,16 @@ scaler = joblib.load(SCALER_PATH)
 # ── FastAPI setup ─────────────────────────────────────────────────────
 app = FastAPI(title="Loan Defaulter Predictor")
 
-# Static & templates
+# Templates & Static
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+
 static_path = os.path.join(BASE_DIR, "static")
 if not os.path.exists(static_path):
     os.makedirs(static_path)
 
 app.mount("/static", StaticFiles(directory=static_path), name="static")
-templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
-# ── Mappings (must match training) ─────────────────────────────────────
+# ── Mappings ──────────────────────────────────────────────────────────
 EDU_MAP = {"High School": 0, "Bachelors": 1, "Masters": 2, "PhD": 3}
 
 HOUSING_MAP = {
@@ -49,11 +49,11 @@ HOUSING_MAP = {
 def _risk_level(prob: float) -> str:
     if prob < 30:
         return "Low"
-    if prob < 60:
+    elif prob < 60:
         return "Medium"
-    if prob < 80:
+    elif prob < 80:
         return "High"
-    return "Very_High"   # fixed for CSS
+    return "Very_High"  # CSS-safe
 
 # ── Routes ────────────────────────────────────────────────────────────
 
@@ -73,9 +73,11 @@ async def predict(
     education_level: str = Form(...),
     housing_status: str = Form(...),
 ):
+    # Encoding
     edu_encoded = EDU_MAP.get(education_level, 1)
     housing_own, housing_rent = HOUSING_MAP.get(housing_status, (0, 0))
 
+    # Feature order MUST match training
     feature_names = [
         "Age", "Income", "Loan_Amount", "Credit_Score",
         "Employment_Years", "Education_Level",
