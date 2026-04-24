@@ -76,10 +76,16 @@ async def predict(
 
     # 2. Build feature names list (must match train_model.py order)
     feature_names = [
-        "Age", "Income", "Loan_Amount", "Credit_Score",
-        "Employment_Years", "Education_Level",
-        "Housing_Status_Own", "Housing_Status_Rent"
+    "Age", "Income", "Loan_Amount", "Credit_Score",
+    "Employment_Years", "Education_Level",
+    "Housing_Status_Own", "Housing_Status_Rent"
     ]
+features_df = pd.DataFrame([[
+    data.age, data.income, data.loan_amount, data.credit_score,
+    data.employment_years, edu_encoded, housing_own, housing_rent
+]], columns=feature_names)
+
+features_scaled = scaler.transform(features_df)
 
     # 3. Create DataFrame to avoid UserWarning about feature names
     features_df = pd.DataFrame([[
